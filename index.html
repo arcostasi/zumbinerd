@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ZumbiNerd - Um jogo de plataforma 2D com um zumbi nerd programador">
+    <title>ZumbiNerd - O Zumbi Programador</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Press+Start+2P&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app-wrapper">
+        <!-- Cabeçalho do Sistema -->
+        <header class="app-header">
+            <div class="system-status">
+                <span class="status-indicator online"></span>
+                <span class="status-text">SYS_STATUS: DEBUG_MODE</span>
+            </div>
+            <div class="header-title">ZUMBINERD // COMPILER_CONSOLE</div>
+            <div class="audio-controls">
+                <button class="audio-btn active" id="music-btn">
+                    <span class="btn-icon">🎵</span> Música: ON
+                </button>
+                <button class="audio-btn active" id="sfx-btn">
+                    <span class="btn-icon">🔊</span> SFX: ON
+                </button>
+            </div>
+        </header>
+        
+        <!-- Layout Principal -->
+        <div class="main-layout">
+            <!-- Coluna Esquerda: Terminal de Compilação -->
+            <aside class="sidebar left-sidebar">
+                <div class="panel-header">
+                    <span class="panel-icon">💻</span>
+                    <h3>OUTPUT_LOGS</h3>
+                </div>
+                <div class="terminal-body" id="dev-terminal">
+                    <!-- Logs inseridos dinamicamente -->
+                </div>
+            </aside>
+
+            <!-- Coluna Central: Canvas do Jogo -->
+            <main class="game-column">
+                <div id="game-container" class="crt-effect">
+                    <div id="loading-screen">
+                        <h1 class="game-title">ZumbiNerd</h1>
+                        <div class="loading-bar-container">
+                            <div class="loading-bar"></div>
+                        </div>
+                        <p class="loading-text">Carregando...</p>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Coluna Direita: Controles e Painéis -->
+            <aside class="sidebar right-sidebar">
+
+
+                <!-- Painel de Controles -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-icon">🎮</span>
+                        <h3>CONTROLES</h3>
+                    </div>
+                    <div class="panel-body controls-list">
+                        <div class="control-row">
+                            <span class="keys"><span class="key">A</span> <span class="key">D</span> / <span class="key">←</span> <span class="key">→</span></span>
+                            <span class="action">Mover</span>
+                        </div>
+                        <div class="control-row">
+                            <span class="keys"><span class="key">W</span> / <span class="key">ESP</span> / <span class="key">↑</span></span>
+                            <span class="action">Pular</span>
+                        </div>
+                        <div class="control-row">
+                            <span class="keys"><span class="key">SHIFT</span></span>
+                            <span class="action">Correr</span>
+                        </div>
+                        <div class="control-row">
+                            <span class="keys"><span class="key">ENTER</span></span>
+                            <span class="action">Atacar (Teclado)</span>
+                        </div>
+                        <div class="control-row">
+                            <span class="keys"><span class="key">ESC</span> / <span class="key">P</span></span>
+                            <span class="action">Pausar</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Painel de Recordes -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-icon">🏆</span>
+                        <h3>HIGHSCORES</h3>
+                    </div>
+                    <div class="panel-body">
+                        <ul class="highscore-list" id="highscore-list">
+                            <!-- Inserido dinamicamente -->
+                        </ul>
+                    </div>
+                </div>
+
+
+            </aside>
+        </div>
+    </div>
+
+    <!-- Modais de Interface -->
+    <!-- Modal de Opções -->
+    <div class="modal-overlay" id="options-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>OPÇÕES DO SISTEMA</h2>
+                <button class="close-modal-btn" onclick="closeHtmlModal('options')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="option-group">
+                    <label for="modal-volume-music">Volume da Música:</label>
+                    <input type="range" id="modal-volume-music" min="0" max="100" value="50">
+                </div>
+                <div class="option-group">
+                    <label for="modal-volume-sfx">Volume dos Efeitos:</label>
+                    <input type="range" id="modal-volume-sfx" min="0" max="100" value="70">
+                </div>
+                <div class="option-group" style="flex-direction: row; justify-content: space-between; align-items: center; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 15px;">
+                    <label for="crt-toggle" style="margin: 0;">Filtro CRT Scanlines:</label>
+                    <label class="switch">
+                        <input type="checkbox" id="crt-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="option-group" style="border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 15px;">
+                    <label for="difficulty-select">Dificuldade do Jogo:</label>
+                    <select id="difficulty-select" style="background: #0d0d18; color: var(--color-border-neon); border: 1px solid var(--color-border-dim); padding: 8px; border-radius: 4px; font-family: var(--font-mono); outline: none; font-size: 0.8rem; width: 100%;">
+                        <option value="easy">Fácil (4 Vidas)</option>
+                        <option value="normal" selected>Normal (3 Vidas)</option>
+                        <option value="hard">Hardcore (1 Vida)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn" onclick="closeHtmlModal('options')">APLICAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Créditos -->
+    <div class="modal-overlay" id="credits-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>CRÉDITOS DO PROJETO</h2>
+                <button class="close-modal-btn" onclick="closeHtmlModal('credits')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="credits-logo">ZUMBINERD</div>
+                <p class="credits-role">Desenvolvedor Principal</p>
+                <p class="credits-name">Arcostasi & Antigravity (Gemini 3.5 Flash)</p>
+                <div class="credits-divider"></div>
+                <p class="credits-role">Tecnologia do Jogo</p>
+                <p class="credits-name">Phaser 3 (Arcade Physics)</p>
+                <p class="credits-name">Música: "Nowhere Left To Hide" por Arcostasi</p>
+                <div class="credits-divider"></div>
+                <p class="credits-role">Assets Artísticos</p>
+                <p class="credits-name">Zombie Nerd Sprite / Graveyard Tileset</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn" onclick="closeHtmlModal('credits')">FECHAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de História -->
+    <div class="modal-overlay" id="story-modal">
+        <div class="modal-content" style="max-width: 580px;">
+            <div class="modal-header">
+                <h2>CÓDIGO DE ORIGEM // SINGULARIDADE TECNO-NECROMÂNTICA</h2>
+                <button class="close-modal-btn" onclick="closeHtmlModal('story')">&times;</button>
+            </div>
+            <div class="modal-body" style="font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.55; color: var(--color-text); max-height: 420px; overflow-y: auto; padding-right: 10px;">
+                <p style="color: var(--color-border-neon); font-family: var(--font-pixel); font-size: 0.7rem; text-align: center; margin-bottom: 15px; text-shadow: 0 0 5px rgba(57,255,20,0.4);">REPOSITÓRIO: NEOCORP_BASEMENT_LORE</p>
+                
+                <p>Você é <strong>Alan</strong>, Desenvolvedor Líder na megacorporação <em>NeoCorp</em>. Após programar por 72 horas seguidas movido a pizzas frias e latas de energético, você cometeu um erro de sintaxe crítico e desmaiou sobre o teclado da sala de servidores principal.</p>
+                
+                <p><strong>A Maldição de Hardware:</strong> O que ninguém te contou é que a sede da NeoCorp foi construída diretamente sobre um <strong>antigo cemitério vitoriano do século XIX</strong>. Quando a inteligência artificial do servidor central entrou em colapso devido ao seu bug, o campo magnético dos mainframes se fundiu com a energia espiritual do solo amaldiçoado, criando uma <strong>Singularidade Tecno-Necromântica</strong> física no subsolo!</p>
+                
+                <p>Ao acordar, você descobriu que se transformou no <strong>Zumbi Nerd</strong>. A sala de servidores foi invadida por terra, lápides e árvores mortas que brotaram das profundezas do antigo cemitério. No entanto, sua obsessão de programador continua intacta e você precisa depurar o sistema!</p>
+                
+                <p><strong>Os Desafios Coerentes da Área:</strong></p>
+                <ul style="margin-left: 20px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
+                    <li>💀 <strong>Os Esqueletos:</strong> Antigos programadores de COBOL e Assembly que faleceram de tanto fazer hora extra, reanimados pelas correntes elétricas dos servidores e controlados pelo vírus.</li>
+                    <li>🪦 <strong>As Lápides:</strong> Túmulos físicos erguidos pelos servidores necromânticos para marcar os repositórios de projetos famosos que foram cancelados e deletados na história da computação.</li>
+                    <li>⚙️ <strong>As Serras Rotativas:</strong> Coolers de refrigeração gigantes dos processadores centrais que se soltaram e giram desgovernados devido à sobrecarga magnética.</li>
+                    <li>📌 <strong>Os Espinhos:</strong> Barramentos de pinos de placas-mãe expostos e gigantescos que cresceram pelo chão como ervas daninhas eletrônicas.</li>
+                    <li>🦴 <strong>Os Ossos de Dados:</strong> Lotes físicos de memória corrompida fundidos com os restos mortais do cemitério que agora flutuam na rede física. Colete-os para restaurar os backups!</li>
+                </ul>
+                
+                <p style="text-align: center; color: var(--color-primary); font-family: var(--font-pixel); font-size: 0.7rem; margin-top: 15px; text-shadow: 0 0 5px rgba(78,205,196,0.3);">COMPILAR OU MORRER: A DEPURAÇÃO DA SUA ALMA!</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn" onclick="closeHtmlModal('story')">INICIAR COMPILAÇÃO</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Registro de Recorde -->
+    <div class="modal-overlay" id="highscore-modal">
+        <div class="modal-content" style="max-width: 400px; border-color: #ffd700; box-shadow: 0 0 30px rgba(255, 215, 0, 0.25);">
+            <div class="modal-header" style="border-bottom-color: rgba(255, 215, 0, 0.2);">
+                <h2 style="color: #ffd700; text-shadow: 0 0 5px rgba(255, 215, 0, 0.4);">🏆 RECORD_BREAK DETECTED</h2>
+            </div>
+            <div class="modal-body" style="align-items: center; text-align: center; gap: 15px; font-family: var(--font-mono); font-size: 0.8rem;">
+                <p style="font-family: var(--font-pixel); font-size: 0.6rem; color: var(--color-text); line-height: 1.4;">Você invadiu os logs prioritários do servidor! Digite sua TAG de programador:</p>
+                
+                <input type="text" id="highscore-tag-input" maxlength="10" placeholder="DEV" autofocus 
+                       style="width: 80%; background: #07070a; border: 2px solid var(--color-border-neon); color: var(--color-border-neon); font-family: var(--font-pixel); font-size: 1.1rem; text-align: center; padding: 10px; border-radius: 6px; outline: none; text-transform: uppercase; box-shadow: 0 0 10px rgba(57, 255, 20, 0.15);">
+                
+                <p id="highscore-modal-score-display" style="font-family: var(--font-pixel); font-size: 0.75rem; color: #ffd700; margin-top: 5px;"></p>
+            </div>
+            <div class="modal-footer" style="justify-content: center; background: rgba(0, 0, 0, 0.2); border-top-color: rgba(255, 215, 0, 0.2);">
+                <button class="modal-btn" id="save-highscore-btn" style="border-color: #ffd700; color: #ffd700; font-size: 0.65rem; width: 80%; padding: 10px 0;">GRAVAR NO BANCO DE DADOS</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Ponte JavaScript para Integrações -->
+    <script>
+        // Log para o terminal retro
+        window.logToTerminal = (message, type = 'info') => {
+            const terminal = document.getElementById('dev-terminal');
+            if (!terminal) return;
+            
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0];
+            const line = document.createElement('div');
+            line.className = `terminal-line type-${type}`;
+            
+            let prefix = '[INFO]';
+            if (type === 'sys') prefix = '[SYSTEM]';
+            else if (type === 'game') prefix = '[GAME]';
+            else if (type === 'combat') prefix = '[COMBAT]';
+            else if (type === 'warn') prefix = '[WARN]';
+            else if (type === 'danger') prefix = '[DANGER]';
+            else if (type === 'success') prefix = '[SUCCESS]';
+            
+            line.innerHTML = `<span class="time">${timeStr}</span> <span class="prefix">${prefix}</span> <span class="msg">${message}</span>`;
+            terminal.appendChild(line);
+            
+            // Auto scroll
+            terminal.scrollTop = terminal.scrollHeight;
+            
+            // Limitar a 50 linhas para evitar consumo de memória
+            while (terminal.childElementCount > 50) {
+                terminal.removeChild(terminal.firstChild);
+            }
+        };
+
+        // Função para limpar os logs do terminal
+        window.clearTerminal = () => {
+            const terminal = document.getElementById('dev-terminal');
+            if (terminal) {
+                terminal.innerHTML = '';
+                window.logToTerminal('Terminal de Compilação redefinido.', 'sys');
+            }
+        };
+
+        // Funções de abertura de Modais
+        window.openHtmlModal = (modalId) => {
+            const modal = document.getElementById(`${modalId}-modal`);
+            if (modal) {
+                modal.classList.add('active');
+                window.logToTerminal(`Modal '${modalId}' aberto.`, 'sys');
+                // Se a cena do Phaser existir e estiver ativa, pausar som temporariamente ou emitir eventos
+            }
+        };
+
+        window.closeHtmlModal = (modalId) => {
+            const modal = document.getElementById(`${modalId}-modal`);
+            if (modal) {
+                modal.classList.remove('active');
+                window.logToTerminal(`Modal '${modalId}' fechado.`, 'sys');
+            }
+        };
+
+        // Funções para o Modal de Highscore
+        let pendingHighscore = 0;
+        window.openHighscoreInputModal = (score) => {
+            pendingHighscore = score;
+            const modal = document.getElementById('highscore-modal');
+            const scoreDisplay = document.getElementById('highscore-modal-score-display');
+            const input = document.getElementById('highscore-tag-input');
+            
+            if (scoreDisplay) scoreDisplay.textContent = `PONTOS: ${score}`;
+            if (input) {
+                input.value = 'DEV';
+                setTimeout(() => input.select(), 100);
+            }
+            if (modal) {
+                modal.classList.add('active');
+                window.logToTerminal(`Entrada de recorde requisitada: ${score} pts.`, 'sys');
+            }
+        };
+
+        // Obter Dificuldade do Painel
+        window.getDifficulty = () => {
+            const select = document.getElementById('difficulty-select');
+            return select ? select.value : 'normal';
+        };
+
+        // Exposição e atualização do Leaderboard local
+        window.updateLeaderboardDisplay = () => {
+            const highscoreList = document.getElementById('highscore-list');
+            if (!highscoreList) return;
+            highscoreList.innerHTML = '';
+            
+            let scores = JSON.parse(localStorage.getItem('zumbinerd_scores'));
+            if (!scores || scores.length === 0) {
+                // Tentar carregar do recorde antigo e gerar scores iniciais fictícios
+                const legacyRecord = parseInt(localStorage.getItem('zumbinerd_highscore')) || 0;
+                scores = [
+                    { name: 'NERD_DEATH', score: Math.max(legacyRecord, 1500), date: new Date().toLocaleDateString() },
+                    { name: 'BUG_HUNTER', score: 1000, date: new Date().toLocaleDateString() },
+                    { name: 'ZMB_DEV', score: 500, date: new Date().toLocaleDateString() }
+                ];
+                localStorage.setItem('zumbinerd_scores', JSON.stringify(scores));
+            }
+            
+            scores.sort((a, b) => b.score - a.score);
+            scores = scores.slice(0, 5); // Top 5
+            
+            scores.forEach((entry, idx) => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="rank">${idx + 1}.</span> <span class="name">${entry.name}</span> <span class="score">${entry.score.toString().padStart(5, '0')}</span>`;
+                highscoreList.appendChild(li);
+            });
+        };
+
+        window.addHighScore = (name, score) => {
+            let scores = JSON.parse(localStorage.getItem('zumbinerd_scores')) || [];
+            scores.push({ 
+                name: (name || 'PLAYER').substring(0, 10).toUpperCase(), 
+                score: score, 
+                date: new Date().toLocaleDateString() 
+            });
+            scores.sort((a, b) => b.score - a.score);
+            scores = scores.slice(0, 5);
+            localStorage.setItem('zumbinerd_scores', JSON.stringify(scores));
+            localStorage.setItem('zumbinerd_highscore', scores[0].score.toString());
+            window.updateLeaderboardDisplay();
+        };
+
+        // Inicializações ao carregar o DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            // Relógio
+            const clockEl = document.getElementById('system-clock');
+            if (clockEl) {
+                const updateClock = () => {
+                    const now = new Date();
+                    clockEl.textContent = now.toLocaleString('pt-BR');
+                };
+                updateClock();
+                setInterval(updateClock, 1000);
+            }
+
+            // CRT Scanlines Toggle
+            const crtToggle = document.getElementById('crt-toggle');
+            const gameContainer = document.getElementById('game-container');
+            const crtPref = localStorage.getItem('zumbinerd_crt') !== 'false';
+            
+            if (crtToggle && gameContainer) {
+                crtToggle.checked = crtPref;
+                if (crtPref) {
+                    gameContainer.classList.add('crt-effect');
+                } else {
+                    gameContainer.classList.remove('crt-effect');
+                }
+                
+                crtToggle.addEventListener('change', () => {
+                    if (crtToggle.checked) {
+                        gameContainer.classList.add('crt-effect');
+                        localStorage.setItem('zumbinerd_crt', 'true');
+                        window.logToTerminal('Filtro CRT ativado.', 'sys');
+                    } else {
+                        gameContainer.classList.remove('crt-effect');
+                        localStorage.setItem('zumbinerd_crt', 'false');
+                        window.logToTerminal('Filtro CRT desativado.', 'sys');
+                    }
+                });
+            }
+
+            // Dificuldade (LocalStorage)
+            const diffSelect = document.getElementById('difficulty-select');
+            if (diffSelect) {
+                const storedDiff = localStorage.getItem('zumbinerd_difficulty') || 'normal';
+                diffSelect.value = storedDiff;
+                diffSelect.addEventListener('change', () => {
+                    localStorage.setItem('zumbinerd_difficulty', diffSelect.value);
+                    window.logToTerminal(`Dificuldade alterada para: ${diffSelect.value.toUpperCase()}`, 'sys');
+                });
+            }
+
+            // Integração dos Controles de Áudio
+            const musicBtn = document.getElementById('music-btn');
+            const sfxBtn = document.getElementById('sfx-btn');
+            const volMusic = document.getElementById('modal-volume-music');
+            const volSfx = document.getElementById('modal-volume-sfx');
+
+            // Sincronizar UI com os valores iniciais do AudioSystem (carregados do LocalStorage)
+            if (musicBtn && window.audioSystem) {
+                if (window.audioSystem.musicEnabled) {
+                    musicBtn.classList.add('active');
+                    musicBtn.innerHTML = '<span class="btn-icon">🎵</span> Música: ON';
+                } else {
+                    musicBtn.classList.remove('active');
+                    musicBtn.innerHTML = '<span class="btn-icon">🔇</span> Música: OFF';
+                }
+            }
+
+            if (sfxBtn && window.audioSystem) {
+                if (window.audioSystem.sfxEnabled) {
+                    sfxBtn.classList.add('active');
+                    sfxBtn.innerHTML = '<span class="btn-icon">🔊</span> SFX: ON';
+                } else {
+                    sfxBtn.classList.remove('active');
+                    sfxBtn.innerHTML = '<span class="btn-icon">🔇</span> SFX: OFF';
+                }
+            }
+
+            if (volMusic && window.audioSystem) {
+                volMusic.value = Math.round(window.audioSystem.musicVolume * 100);
+            }
+
+            if (volSfx && window.audioSystem) {
+                volSfx.value = Math.round(window.audioSystem.sfxVolume * 100);
+            }
+
+            const toggleMusic = () => {
+                if (!window.audioSystem) return;
+                window.audioSystem.initContext();
+                const enabled = !window.audioSystem.musicEnabled;
+                window.audioSystem.setMusicEnabled(enabled);
+                
+                if (enabled) {
+                    musicBtn.classList.add('active');
+                    musicBtn.innerHTML = '<span class="btn-icon">🎵</span> Música: ON';
+                    window.logToTerminal('Música de fundo ativada.', 'sys');
+                } else {
+                    musicBtn.classList.remove('active');
+                    musicBtn.innerHTML = '<span class="btn-icon">🔇</span> Música: OFF';
+                    window.logToTerminal('Música de fundo desativada (muda).', 'sys');
+                }
+            };
+
+            const toggleSfx = () => {
+                if (!window.audioSystem) return;
+                window.audioSystem.initContext();
+                const enabled = !window.audioSystem.sfxEnabled;
+                window.audioSystem.setSfxEnabled(enabled);
+                
+                if (enabled) {
+                    sfxBtn.classList.add('active');
+                    sfxBtn.innerHTML = '<span class="btn-icon">🔊</span> SFX: ON';
+                    window.logToTerminal('Efeitos sonoros ativados.', 'sys');
+                } else {
+                    sfxBtn.classList.remove('active');
+                    sfxBtn.innerHTML = '<span class="btn-icon">🔇</span> SFX: OFF';
+                    window.logToTerminal('Efeitos sonoros desativados (mudos).', 'sys');
+                }
+            };
+
+            if (musicBtn) musicBtn.addEventListener('click', toggleMusic);
+            if (sfxBtn) sfxBtn.addEventListener('click', toggleSfx);
+
+            if (volMusic) {
+                volMusic.addEventListener('input', (e) => {
+                    const vol = e.target.value / 100;
+                    if (window.audioSystem) {
+                        window.audioSystem.setMusicVolume(vol);
+                    }
+                });
+            }
+
+            if (volSfx) {
+                volSfx.addEventListener('input', (e) => {
+                    const vol = e.target.value / 100;
+                    if (window.audioSystem) {
+                        window.audioSystem.setSfxVolume(vol);
+                    }
+                });
+            }
+
+            // Carregar recordes no início
+            window.updateLeaderboardDisplay();
+
+            // Configurar salvar recorde do modal
+            const saveBtn = document.getElementById('save-highscore-btn');
+            const tagInput = document.getElementById('highscore-tag-input');
+
+            saveBtn?.addEventListener('click', () => {
+                const tag = (tagInput?.value || 'DEV').trim().toUpperCase() || 'DEV';
+                if (window.addHighScore) {
+                    window.addHighScore(tag, pendingHighscore);
+                }
+                const modal = document.getElementById('highscore-modal');
+                if (modal) {
+                    modal.classList.remove('active');
+                }
+                window.logToTerminal(`Recorde gravado para a tag ${tag}!`, 'success');
+            });
+
+            tagInput?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    saveBtn?.click();
+                }
+            });
+            
+            window.logToTerminal('Sistema de Dashboard inicializado.', 'sys');
+            window.logToTerminal('Aguardando compilação do jogo...', 'sys');
+        });
+    </script>
+
+    <!-- Phaser & Código do Jogo -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>
