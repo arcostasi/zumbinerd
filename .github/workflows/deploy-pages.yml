@@ -22,13 +22,23 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    env:
+      PAGES_ENABLEMENT_TOKEN: ${{ secrets.PAGES_ENABLEMENT_TOKEN }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Configure GitHub Pages
+        if: env.PAGES_ENABLEMENT_TOKEN == ''
         uses: actions/configure-pages@v5
+
+      - name: Configure GitHub Pages with enablement
+        if: env.PAGES_ENABLEMENT_TOKEN != ''
+        uses: actions/configure-pages@v5
+        with:
+          token: ${{ env.PAGES_ENABLEMENT_TOKEN }}
+          enablement: true
 
       - name: Prepare static site
         run: |
