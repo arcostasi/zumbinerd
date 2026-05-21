@@ -7,10 +7,10 @@ export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
 
 // Physics
-export const GRAVITY = 1200;
+export const GRAVITY = 1100;
 export const PLAYER_SPEED = 200;
 export const PLAYER_RUN_SPEED = 350;
-export const PLAYER_JUMP_VELOCITY = -550;
+export const PLAYER_JUMP_VELOCITY = -760;
 
 // Animation frame rates
 export const ANIM_FRAMERATE = {

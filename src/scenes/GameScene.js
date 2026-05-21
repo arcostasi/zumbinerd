@@ -201,9 +201,17 @@ export default class GameScene extends Phaser.Scene {
 
             const tile = this.platforms.create(x, y, tileKey);
             tile.setDepth(DEPTH.TILES);
-            tile.body.setSize(64, 64);
-            tile.body.setOffset(0, 0);
             tile.refreshBody();
+            
+            // Set thin collision box (16px) at the top of the 64px tile
+            // This leaves the bottom 48px completely non-solid
+            tile.body.setSize(64, 16);
+            tile.body.setOffset(0, 0);
+            
+            // Make platforms one-way: only collide when falling onto the top surface.
+            tile.body.checkCollision.down = false;
+            tile.body.checkCollision.left = false;
+            tile.body.checkCollision.right = false;
         }
     }
 
@@ -625,7 +633,13 @@ export default class GameScene extends Phaser.Scene {
     setupCollisions() {
         // Player vs environment
         this.physics.add.collider(this.player, this.groundTiles);
-        this.physics.add.collider(this.player, this.platforms);
+        this.physics.add.collider(this.player, this.platforms, null, (player, platform) => {
+            // Only collide if player is moving down (falling/landing) and their feet are above the platform top
+            if (player.body.velocity.y >= 0 && player.body.bottom <= platform.body.top + 8) {
+                return true;
+            }
+            return false;
+        }, this);
 
         // Enemies vs environment
         this.physics.add.collider(this.enemiesGroup, this.groundTiles);
@@ -763,7 +777,8 @@ export default class GameScene extends Phaser.Scene {
     }
 
     handleJump() {
-        const onGround = this.player.body.onFloor();
+        // Robust ground check: check floor, body collision touching down, or blocked down
+        const onGround = this.player.body.onFloor() || this.player.body.touching.down || this.player.body.blocked.down;
 
         const jumpJustPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
             Phaser.Input.Keyboard.JustDown(this.cursors.space) ||
@@ -812,7 +827,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     checkAttackHit() {
-        const attackRange = 70;
+        const attackRange = 85;
         const playerX = this.player.x;
         const playerY = this.player.y;
 
@@ -963,10 +978,15 @@ export default class GameScene extends Phaser.Scene {
             const distance = Phaser.Math.Distance.Between(skeleton.x, skeleton.y, this.player.x, this.player.y);
             if (distance < 450 && this.playerState !== PLAYER_STATE.DEAD) {
                 const timeNow = this.time.now;
-                const nextShoot = skeleton.getData('nextShootTime') || 0;
+                let nextShoot = skeleton.getData('nextShootTime');
+                if (nextShoot === undefined) {
+                    // Initial grace period of 2.5 to 4 seconds at the start of each level/phase
+                    nextShoot = timeNow + Phaser.Math.Between(2500, 4000);
+                    skeleton.setData('nextShootTime', nextShoot);
+                }
                 if (timeNow > nextShoot) {
                     const dirX = this.player.x > skeleton.x ? 1 : -1;
-                    skeleton.setData('nextShootTime', timeNow + Phaser.Math.Between(2500, 4000));
+                    skeleton.setData('nextShootTime', timeNow + Phaser.Math.Between(3000, 5000)); // Cooldown between throws (3 to 5 seconds)
                     this.shootProjectile(skeleton, dirX);
                 }
             }
