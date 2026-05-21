@@ -18,12 +18,12 @@ export default class GameScene extends Phaser.Scene {
         this.score = data.score || 0;
         this.levelConfig = LEVELS[this.currentLevel];
         this.isLevelTransitioning = false;
-        
+
         // Clear terminal output logs on new game / retry (Phase 1)
         if (this.currentLevel === 1 && window.clearTerminal) {
             window.clearTerminal();
         }
-        
+
         // Read difficulty from dashboard configuration
         const difficulty = window.getDifficulty ? window.getDifficulty() : 'normal';
         if (difficulty === 'easy') {
@@ -202,12 +202,12 @@ export default class GameScene extends Phaser.Scene {
             const tile = this.platforms.create(x, y, tileKey);
             tile.setDepth(DEPTH.TILES);
             tile.refreshBody();
-            
+
             // Set thin collision box (16px) at the top of the 64px tile
             // This leaves the bottom 48px completely non-solid
             tile.body.setSize(64, 16);
             tile.body.setOffset(0, 0);
-            
+
             // Make platforms one-way: only collide when falling onto the top surface.
             tile.body.checkCollision.down = false;
             tile.body.checkCollision.left = false;
@@ -330,13 +330,13 @@ export default class GameScene extends Phaser.Scene {
             spike.setOrigin(0.5, 1); // Align origin to bottom-center
             spike.setScale(0.55); // Made spikes larger and more visible
             spike.setDepth(DEPTH.TILES + 2);
-            
+
             // Set body size and offset relative to top-left of the texture (unscaled values)
             const bodyWidth = spike.width * 0.7; // Cover 70% width of the sprite
             const bodyHeight = spike.height * 0.95; // Cover 95% height of the sprite (to catch feet on top)
             const offsetX = (spike.width - bodyWidth) / 2;
             const offsetY = spike.height - bodyHeight;
-            
+
             spike.body.setSize(bodyWidth, bodyHeight);
             spike.body.setOffset(offsetX, offsetY);
             spike.refreshBody(); // MUST be called after setSize and setOffset for static bodies!
@@ -398,7 +398,7 @@ export default class GameScene extends Phaser.Scene {
         platformConfigs.forEach(p => {
             const pStartX = p.x - 32; // Include half tile offset for safety
             const pEndX = p.x + (p.width * TILE_SIZE) - 32;
-            
+
             if (x >= pStartX && x <= pEndX) {
                 const diff = Math.abs(y - p.y);
                 if (diff < minDiff) {
@@ -570,13 +570,13 @@ export default class GameScene extends Phaser.Scene {
 
         // Pause Button at the bottom-right corner
         const pauseButton = this.add.container(GAME_WIDTH - 130, GAME_HEIGHT - 45);
-        
+
         const btnBg = this.add.graphics();
         btnBg.fillStyle(0x1a1a2e, 0.85);
         btnBg.fillRoundedRect(0, 0, 110, 30, 6);
         btnBg.lineStyle(2, 0x7cb342, 1);
         btnBg.strokeRoundedRect(0, 0, 110, 30, 6);
-        
+
         const btnText = this.add.text(55, 15, 'MENU (ESC)', {
             fontFamily: '"Press Start 2P"',
             fontSize: '9px',
@@ -584,7 +584,7 @@ export default class GameScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         const zone = this.add.zone(55, 15, 110, 30).setInteractive({ useHandCursor: true });
-        
+
         pauseButton.add([btnBg, btnText, zone]);
         pauseButton.setScrollFactor(0);
         pauseButton.setDepth(DEPTH.UI);
@@ -712,7 +712,7 @@ export default class GameScene extends Phaser.Scene {
         if (this.player.y > GAME_HEIGHT - 40) {
             this.lives--;
             this.updateLivesDisplay();
-            
+
             if (window.audioSystem) {
                 window.audioSystem.playHit();
             }
@@ -726,11 +726,11 @@ export default class GameScene extends Phaser.Scene {
                 if (window.logToTerminal) {
                     window.logToTerminal(`SEGFAULT: Acesso de memória inválido (caiu no abismo)! Vidas restantes: ${this.lives}`, 'danger');
                 }
-                
+
                 // Prevent further update loops from messing with player position
                 this.playerState = PLAYER_STATE.DEAD;
                 this.player.body.enable = false;
-                
+
                 // Restart scene keeping score and lives
                 this.cameras.main.fadeOut(500, 0, 0, 0);
                 this.cameras.main.once('camerafadeoutcomplete', () => {
@@ -777,8 +777,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     handleJump() {
-        // Robust ground check: check floor, body collision touching down, or blocked down
-        const onGround = this.player.body.onFloor() || this.player.body.touching.down || this.player.body.blocked.down;
+        const onGround = this.player.body.onFloor();
 
         const jumpJustPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
             Phaser.Input.Keyboard.JustDown(this.cursors.space) ||
@@ -897,14 +896,14 @@ export default class GameScene extends Phaser.Scene {
                 stroke: '#000000',
                 strokeThickness: 2
             }).setOrigin(0.5).setDepth(DEPTH.EFFECTS);
-            
+
             this.physics.add.existing(p);
             p.body.setVelocity(
                 Phaser.Math.Between(-120, 120),
                 Phaser.Math.Between(-280, -100)
             );
             p.body.setGravityY(500); // pull down
-            
+
             this.tweens.add({
                 targets: p,
                 alpha: 0,
@@ -968,7 +967,7 @@ export default class GameScene extends Phaser.Scene {
             }
 
             skeleton.setData('direction', direction);
-            
+
             // Only move if not currently paused casting an error
             if (!skeleton.getData('isShooting')) {
                 skeleton.setVelocityX(direction * speed);
@@ -1018,7 +1017,7 @@ export default class GameScene extends Phaser.Scene {
 
     collectBone(player, bone) {
         if (this.playerState === PLAYER_STATE.DEAD) return;
-        
+
         // Disable physics body immediately to prevent duplicate overlaps during tween
         if (bone.body) {
             bone.body.enable = false;
@@ -1175,7 +1174,7 @@ export default class GameScene extends Phaser.Scene {
     playerDeath() {
         this.playerState = PLAYER_STATE.DEAD;
         this.player.setVelocityX(0); // Stop horizontal velocity, keep vertical gravity active
-        
+
         if (window.audioSystem) {
             window.audioSystem.playGameOver();
             window.audioSystem.startMusic('death');
@@ -1226,7 +1225,7 @@ export default class GameScene extends Phaser.Scene {
         const footX = this.player.x;
         const footY = this.player.y;
         const direction = this.facingRight ? -1 : 1;
-        
+
         for (let i = 0; i < 2; i++) {
             const size = Phaser.Math.Between(2, 4);
             const color = Math.random() > 0.5 ? 0x7cb342 : 0x39ff14;
@@ -1237,14 +1236,14 @@ export default class GameScene extends Phaser.Scene {
                 color,
                 0.7
             ).setDepth(DEPTH.EFFECTS);
-            
+
             this.physics.add.existing(dust);
             dust.body.setAllowGravity(false);
             dust.body.setVelocity(
                 direction * Phaser.Math.Between(20, 50),
                 Phaser.Math.Between(-30, -10)
             );
-            
+
             this.tweens.add({
                 targets: dust,
                 alpha: 0,
@@ -1258,7 +1257,7 @@ export default class GameScene extends Phaser.Scene {
     createLandingDust() {
         const footX = this.player.x;
         const footY = this.player.y;
-        
+
         for (let i = 0; i < 6; i++) {
             const size = Phaser.Math.Between(3, 6);
             const color = Math.random() > 0.4 ? 0x7cb342 : 0x95e1d3;
@@ -1269,17 +1268,17 @@ export default class GameScene extends Phaser.Scene {
                 color,
                 0.8
             ).setDepth(DEPTH.EFFECTS);
-            
+
             this.physics.add.existing(dust);
             dust.body.setAllowGravity(false);
-            
+
             const angle = (i / 5) * Math.PI;
             const speed = Phaser.Math.Between(40, 100);
             dust.body.setVelocity(
                 Math.cos(angle) * speed,
                 -Math.abs(Math.sin(angle)) * speed * 0.5
             );
-            
+
             this.tweens.add({
                 targets: dust,
                 alpha: 0,
@@ -1293,7 +1292,7 @@ export default class GameScene extends Phaser.Scene {
     triggerDash() {
         this.isDashing = true;
         this.nextDashTime = this.time.now + 1000; // 1s Cooldown
-        
+
         if (window.audioSystem) {
             window.audioSystem.playCollect();
         }
@@ -1304,15 +1303,15 @@ export default class GameScene extends Phaser.Scene {
 
         const originalGravityY = this.player.body.gravity.y;
         this.player.body.setAllowGravity(false);
-        
+
         const dashDir = this.facingRight ? 1 : -1;
         this.player.setVelocity(dashDir * 700, 0);
-        
+
         const wasInvincible = this.isInvincible;
         this.isInvincible = true;
-        
+
         const codeSnippets = [
-            'import', 'const', 'let', 'function', 'class', 'return', 'if', 'else', 
+            'import', 'const', 'let', 'function', 'class', 'return', 'if', 'else',
             'while', 'true', 'false', 'null', 'void', '0', '1', '=>', 'new', 'this'
         ];
 
@@ -1320,13 +1319,13 @@ export default class GameScene extends Phaser.Scene {
             delay: 25,
             callback: () => {
                 if (!this.isDashing) return;
-                
+
                 const code = codeSnippets[Phaser.Math.Between(0, codeSnippets.length - 1)];
                 const offsetDir = this.facingRight ? -25 : 25;
                 const text = this.add.text(
-                    this.player.x + offsetDir + Phaser.Math.Between(-10, 10), 
-                    this.player.y - 35 + Phaser.Math.Between(-15, 15), 
-                    code, 
+                    this.player.x + offsetDir + Phaser.Math.Between(-10, 10),
+                    this.player.y - 35 + Phaser.Math.Between(-15, 15),
+                    code,
                     {
                         fontFamily: 'monospace',
                         fontSize: '9px',
@@ -1335,7 +1334,7 @@ export default class GameScene extends Phaser.Scene {
                         strokeThickness: 2
                     }
                 ).setOrigin(0.5).setDepth(DEPTH.EFFECTS);
-                
+
                 this.tweens.add({
                     targets: text,
                     alpha: 0,
@@ -1369,7 +1368,7 @@ export default class GameScene extends Phaser.Scene {
         skeleton.setVelocityX(0);
 
         skeleton.setFlipX(dirX < 0);
-        
+
         const errors = ['SyntaxError', 'NullPointerException', 'StackOverflow', 'TypeError', 'UndefinedError'];
         const errText = errors[Phaser.Math.Between(0, errors.length - 1)];
 
